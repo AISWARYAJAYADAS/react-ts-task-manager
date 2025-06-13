@@ -19,3 +19,6 @@ A simple dashboard to organize your tasks.
 - Material UI
 - Vite
 
+## 📸 Preview
+
+<img src="./public/scnshot.png" alt="Task Manager Screenshot" width="600"/>
