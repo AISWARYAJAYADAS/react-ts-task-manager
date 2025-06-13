@@ -21,4 +21,4 @@ A simple dashboard to organize your tasks.
 
 ## 📸 Preview
 
-<img src="./public/scnshot.png" alt="Task Manager Screenshot" width="600"/>
+<img src="./src/assets/scnshot.png" alt="Task Manager Screenshot" width="600"/>
