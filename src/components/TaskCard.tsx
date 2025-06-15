@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, ArrowForward, ArrowBack } from '@mui/icons-material';
 import type { TaskCardProps } from '../types/taskTypes';
+import { formatStatus } from '../utils/formatUtils';
 
 const statusColors = {
   todo: 'default',
@@ -38,9 +39,9 @@ export const TaskCard = ({
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Chip
-            label={status.replace('-', ' ').toUpperCase()}
-            color={statusColors[status]}
-            size="small"
+              label={formatStatus(status).toUpperCase()}     
+              color={statusColors[status]}
+              size="small"
           />
           <Chip 
             label={`Due: ${new Date(dueDate).toLocaleDateString()}`} 
@@ -53,7 +54,10 @@ export const TaskCard = ({
         <Box>
           {status !== 'todo' && (
             <Tooltip title="Move back">
-              <IconButton onClick={() => onStatusChange(id, status === 'done' ? 'in-progress' : 'todo')}>
+              <IconButton 
+                    onClick={() => onStatusChange(id, status === 'done' ? 'in-progress' : 'todo')}
+                    aria-label={`Move task ${title} to ${status === 'done' ? 'in-progress' : 'todo'}`}
+                    >
                 <ArrowBack fontSize="small" />
               </IconButton>
             </Tooltip>

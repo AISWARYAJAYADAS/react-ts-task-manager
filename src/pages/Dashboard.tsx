@@ -1,115 +1,125 @@
+// src/pages/Dashboard.tsx
+
 import { useState } from 'react';
-import { Container, Typography, Button, Box, Grid } from '@mui/material';
+import {
+  Container,
+  Typography,
+  Button,
+  Box,
+  Grid,
+} from '@mui/material';
 import { TaskCard } from '../components/TaskCard';
 import { TaskForm } from '../components/TaskForm';
 import type { Task, TaskStatus } from '../types/taskTypes';
-
-const initialTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Prepare project showcase',
-    description: 'Gather all materials for the presentation',
-    status: 'todo',
-    dueDate: new Date(Date.now() + 86400000 * 2).toISOString(),
-    createdAt: new Date()
-  },
-  {
-    id: '2',
-    title: 'Learn Material UI',
-    description: 'Complete the MUI documentation tutorial',
-    status: 'in-progress',
-    dueDate: new Date(Date.now() + 86400000).toISOString(),
-    createdAt: new Date()
-  },
-  {
-    id: '3',
-    title: 'Fix TypeScript errors',
-    description: 'Resolve all TS issues in task components',
-    status: 'done',
-    dueDate: new Date(Date.now() - 86400000).toISOString(),
-    createdAt: new Date()
-  }
-];
+import { initialTasks } from '../data/initialTasks';
+import { formatStatus } from '../utils/formatUtils';
 
 export const Dashboard = () => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
 
+  // --- Add New Task ---
   const handleAddTask = () => {
     setCurrentTask(null);
     setIsDialogOpen(true);
   };
 
+  // --- Edit Task ---
   const handleEditTask = (id: string) => {
-    const task = tasks.find(t => t.id === id);
-    setCurrentTask(task || null);
+    const task = tasks.find((t) => t.id === id) || null;
+    setCurrentTask(task);
     setIsDialogOpen(true);
   };
 
+  // --- Delete Task ---
   const handleDeleteTask = (id: string) => {
-    setTasks(tasks.filter(task => task.id !== id));
+    setTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
+  // --- Change Status ---
   const handleStatusChange = (id: string, newStatus: TaskStatus) => {
-    setTasks(tasks.map(task => 
-      task.id === id ? { ...task, status: newStatus } : task
-    ));
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.id === id ? { ...task, status: newStatus } : task
+      )
+    );
   };
 
+  // --- Submit New or Edited Task ---
   const handleSubmitTask = (taskData: Omit<Task, 'id' | 'createdAt'>) => {
     if (currentTask) {
-      setTasks(tasks.map(task => 
-        task.id === currentTask.id ? 
-          { ...task, ...taskData } : task
-      ));
+      // Editing existing task
+      setTasks((prev) =>
+        prev.map((task) =>
+          task.id === currentTask.id
+            ? { ...task, ...taskData }
+            : task
+        )
+      );
     } else {
+      // Creating new task
       const newTask: Task = {
         ...taskData,
         id: Date.now().toString(),
-        createdAt: new Date()
+        createdAt: new Date(),
       };
-      setTasks([...tasks, newTask]);
+      setTasks((prev) => [...prev, newTask]);
     }
+
+    setIsDialogOpen(false);
+     setCurrentTask(null);
   };
 
-  const filterTasks = (status: TaskStatus) => tasks.filter(task => task.status === status);
+  // --- Filter tasks by status ---
+  const filterTasks = (status: TaskStatus) =>
+    tasks.filter((task) => task.status === status);
+
+  // --- Render ---
+  const statuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        mb: 4,
-        p: 2,
-        backgroundColor: 'background.paper',
-        borderRadius: 1,
-        boxShadow: 1
-      }}>
+      {/* Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 4,
+          p: 2,
+          backgroundColor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: 2,
+        }}
+      >
         <Typography variant="h4" component="h1">
           Task Manager
         </Typography>
-        <Button 
-          variant="contained" 
-          onClick={handleAddTask}
-        >
+        <Button variant="contained" onClick={handleAddTask}>
           + New Task
         </Button>
       </Box>
 
+      {/* Columns */}
       <Grid container spacing={3}>
-        {(['todo', 'in-progress', 'done'] as const).map((status) => (
-          <Grid item xs={12} md={4} key={status}>
-            <Box sx={{ 
-              p: 2, 
-              backgroundColor: 'background.paper',
-              borderRadius: 1,
-              minHeight: '60vh'
-            }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                {status.replace('-', ' ')} ({filterTasks(status).length})
+        {statuses.map((status) => (
+          <Grid  key={status}>
+            <Box
+              sx={{
+                p: 2,
+                backgroundColor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                minHeight: 'auto',
+                // maxHeight: '70vh',
+                // overflowY: 'auto',
+              }}
+            >
+              <Typography variant="h6" gutterBottom>
+                {formatStatus(status)} ({filterTasks(status).length})
               </Typography>
+
               {filterTasks(status).map((task) => (
                 <TaskCard
                   key={task.id}
@@ -124,9 +134,13 @@ export const Dashboard = () => {
         ))}
       </Grid>
 
+      {/* Dialog Form */}
       <TaskForm
         open={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
+        onClose={() => {
+          setIsDialogOpen(false);
+          setCurrentTask(null); 
+        }}
         onSubmit={handleSubmitTask}
         taskToEdit={currentTask}
       />

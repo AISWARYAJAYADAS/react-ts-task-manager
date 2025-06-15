@@ -21,4 +21,13 @@ A simple dashboard to organize your tasks.
 
 ## 📸 Preview
 
-<img src="./src/assets/scnshot.png" alt="Task Manager Screenshot" width="600"/>
+<div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 20px 0;">
+  <div style="text-align: center;">
+    <img src="./src/assets/main-screen.png" alt="Main Task Dashboard" width="450"/>
+    <p><strong>Main Dashboard</strong> - View and manage all tasks</p>
+  </div>
+  <div style="text-align: center;">
+    <img src="./src/assets/form-screen.png" alt="Task Form" width="450"/>
+    <p><strong>Task Form</strong> - Add or edit tasks</p>
+  </div>
+</div>
