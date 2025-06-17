@@ -1,5 +1,3 @@
-// src/pages/Dashboard.tsx
-
 import { useState } from 'react';
 import {
   Container,
@@ -7,17 +5,30 @@ import {
   Button,
   Box,
   Grid,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import { TaskCard } from '../components/TaskCard';
 import { TaskForm } from '../components/TaskForm';
+import { TaskColumn } from '../components/TaskColumn'; // Import the new component
 import type { Task, TaskStatus } from '../types/taskTypes';
 import { initialTasks } from '../data/initialTasks';
-import { formatStatus } from '../utils/formatUtils';
+import { STATUS_ORDER } from '../constants/statusColors'; // Use the defined order
+
+interface SnackbarState {
+  open: boolean;
+  message: string;
+  severity: 'success' | 'error' | 'info' | 'warning';
+}
 
 export const Dashboard = () => {
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
+  const [snackbar, setSnackbar] = useState<SnackbarState>({
+    open: false,
+    message: '',
+    severity: 'info',
+  });
 
   // --- Add New Task ---
   const handleAddTask = () => {
@@ -35,6 +46,11 @@ export const Dashboard = () => {
   // --- Delete Task ---
   const handleDeleteTask = (id: string) => {
     setTasks((prev) => prev.filter((task) => task.id !== id));
+    setSnackbar({
+      open: true,
+      message: 'Task deleted successfully!',
+      severity: 'success',
+    });
   };
 
   // --- Change Status ---
@@ -44,10 +60,16 @@ export const Dashboard = () => {
         task.id === id ? { ...task, status: newStatus } : task
       )
     );
+    setSnackbar({
+      open: true,
+      message: `Task status updated to "${newStatus.replace('-', ' ')}"!`,
+      severity: 'success',
+    });
   };
 
   // --- Submit New or Edited Task ---
   const handleSubmitTask = (taskData: Omit<Task, 'id' | 'createdAt'>) => {
+    let message = '';
     if (currentTask) {
       // Editing existing task
       setTasks((prev) =>
@@ -57,26 +79,30 @@ export const Dashboard = () => {
             : task
         )
       );
+      message = 'Task updated successfully!';
     } else {
       // Creating new task
       const newTask: Task = {
         ...taskData,
-        id: Date.now().toString(),
+        id: Date.now().toString(), // Simple unique ID
         createdAt: new Date(),
       };
       setTasks((prev) => [...prev, newTask]);
+      message = 'Task created successfully!';
     }
 
     setIsDialogOpen(false);
-     setCurrentTask(null);
+    setCurrentTask(null);
+    setSnackbar({ open: true, message, severity: 'success' });
   };
 
-  // --- Filter tasks by status ---
-  const filterTasks = (status: TaskStatus) =>
-    tasks.filter((task) => task.status === status);
+  // Handle Snackbar close
+  const handleSnackbarClose = () => {
+    setSnackbar((prev) => ({ ...prev, open: false }));
+  };
 
-  // --- Render ---
-  const statuses: TaskStatus[] = ['todo', 'in-progress', 'done'];
+  // Render using STATUS_ORDER for consistent column arrangement
+  const statuses: TaskStatus[] = STATUS_ORDER;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -104,32 +130,14 @@ export const Dashboard = () => {
       {/* Columns */}
       <Grid container spacing={3}>
         {statuses.map((status) => (
-          <Grid  key={status}>
-            <Box
-              sx={{
-                p: 2,
-                backgroundColor: 'background.paper',
-                borderRadius: 2,
-                boxShadow: 1,
-                minHeight: 'auto',
-                // maxHeight: '70vh',
-                // overflowY: 'auto',
-              }}
-            >
-              <Typography variant="h6" gutterBottom>
-                {formatStatus(status)} ({filterTasks(status).length})
-              </Typography>
-
-              {filterTasks(status).map((task) => (
-                <TaskCard
-                  key={task.id}
-                  {...task}
-                  onEdit={handleEditTask}
-                  onDelete={handleDeleteTask}
-                  onStatusChange={handleStatusChange}
-                />
-              ))}
-            </Box>
+          <Grid key={status} size={{ xs: 12, sm: 6, md: 4 }}> {/* IMPORTANT: Re-added Grid item wrapper */}
+            <TaskColumn
+              status={status}
+              tasks={tasks}
+              onEdit={handleEditTask}
+              onDelete={handleDeleteTask}
+              onStatusChange={handleStatusChange}
+            />
           </Grid>
         ))}
       </Grid>
@@ -139,11 +147,23 @@ export const Dashboard = () => {
         open={isDialogOpen}
         onClose={() => {
           setIsDialogOpen(false);
-          setCurrentTask(null); 
+          setCurrentTask(null);
         }}
         onSubmit={handleSubmitTask}
         taskToEdit={currentTask}
       />
+
+      {/* Global Snackbar for feedback */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000} // Shorter duration for success messages
+        onClose={handleSnackbarClose}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} onClose={handleSnackbarClose} sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

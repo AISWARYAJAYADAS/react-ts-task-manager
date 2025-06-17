@@ -1,11 +1,12 @@
+/* Global CSS variables and styles */
 :root {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #1e1e1e;
+  color-scheme: light dark; /* Allows browser to pick theme based on OS preference */
+  color: rgba(255, 255, 255, 0.87); /* Default text color for dark mode */
+  background-color: #1e1e1e; /* Default background for dark mode */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -18,16 +19,17 @@ body {
   display: flex;
   justify-content: center;
   min-width: 320px;
-  min-height: 100vh;
+  min-height: 100vh; /* Ensure body takes full viewport height */
 }
 
 #root {
-  max-width: 1440px;
+  max-width: 1440px; /* Max width for the main application content */
   width: 100%;
   margin: 0 auto;
   padding: 1rem;
 }
 
+/* Light mode specific styles */
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;

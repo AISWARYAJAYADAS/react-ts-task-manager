@@ -1,22 +1,17 @@
-import { 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip, 
-  IconButton, 
-  CardActions, 
+import {
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  IconButton,
+  CardActions,
   Tooltip,
-  Box 
+  Box,
 } from '@mui/material';
 import { Edit, Delete, ArrowForward, ArrowBack } from '@mui/icons-material';
-import type { TaskCardProps } from '../types/taskTypes';
+import type { TaskCardProps, TaskStatus } from '../types/taskTypes';
 import { formatStatus } from '../utils/formatUtils';
-
-const statusColors = {
-  todo: 'default',
-  'in-progress': 'primary',
-  done: 'success'
-} as const;
+import { statusColors, STATUS_ORDER } from '../constants/statusColors'; // Import STATUS_ORDER
 
 export const TaskCard = ({
   id,
@@ -26,8 +21,20 @@ export const TaskCard = ({
   dueDate,
   onEdit,
   onDelete,
-  onStatusChange
+  onStatusChange,
 }: TaskCardProps) => {
+  const currentStatusIndex = STATUS_ORDER.indexOf(status);
+  const canMoveBack = currentStatusIndex > 0;
+  const canMoveForward = currentStatusIndex < STATUS_ORDER.length - 1;
+
+  const getPreviousStatus = (): TaskStatus | undefined => {
+    return canMoveBack ? STATUS_ORDER[currentStatusIndex - 1] : undefined;
+  };
+
+  const getNextStatus = (): TaskStatus | undefined => {
+    return canMoveForward ? STATUS_ORDER[currentStatusIndex + 1] : undefined;
+  };
+
   return (
     <Card sx={{ mb: 2, minWidth: 275 }}>
       <CardContent>
@@ -39,32 +46,41 @@ export const TaskCard = ({
         </Typography>
         <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
           <Chip
-              label={formatStatus(status).toUpperCase()}     
-              color={statusColors[status]}
-              size="small"
+            label={formatStatus(status).toUpperCase()}
+            color={statusColors[status]}
+            size="small"
           />
-          <Chip 
-            label={`Due: ${new Date(dueDate).toLocaleDateString()}`} 
-            size="small" 
-            variant="outlined" 
+          <Chip
+            label={`Due: ${new Date(dueDate).toLocaleDateString()}`}
+            size="small"
+            variant="outlined"
           />
         </Box>
       </CardContent>
       <CardActions sx={{ justifyContent: 'space-between' }}>
         <Box>
-          {status !== 'todo' && (
+          {canMoveBack && (
             <Tooltip title="Move back">
-              <IconButton 
-                    onClick={() => onStatusChange(id, status === 'done' ? 'in-progress' : 'todo')}
-                    aria-label={`Move task ${title} to ${status === 'done' ? 'in-progress' : 'todo'}`}
-                    >
+              <IconButton
+                onClick={() => {
+                  const prevStatus = getPreviousStatus();
+                  if (prevStatus) onStatusChange(id, prevStatus);
+                }}
+                aria-label={`Move task ${title} to ${getPreviousStatus()?.replace('-', ' ')}`}
+              >
                 <ArrowBack fontSize="small" />
               </IconButton>
             </Tooltip>
           )}
-          {status !== 'done' && (
+          {canMoveForward && (
             <Tooltip title="Move forward">
-              <IconButton onClick={() => onStatusChange(id, status === 'todo' ? 'in-progress' : 'done')}>
+              <IconButton
+                onClick={() => {
+                  const nextStatus = getNextStatus();
+                  if (nextStatus) onStatusChange(id, nextStatus);
+                }}
+                aria-label={`Move task ${title} to ${getNextStatus()?.replace('-', ' ')}`}
+              >
                 <ArrowForward fontSize="small" />
               </IconButton>
             </Tooltip>

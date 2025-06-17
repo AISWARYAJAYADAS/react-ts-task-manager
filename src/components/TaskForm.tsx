@@ -6,8 +6,6 @@ import {
   TextField,
   Button,
   MenuItem,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import type { Task, TaskStatus } from '../types/taskTypes';
@@ -26,22 +24,16 @@ interface FormErrors {
   dueDate?: string;
 }
 
-interface SnackbarState {
-  open: boolean;
-  message: string;
-}
-
 const initialFormData: Omit<Task, 'id' | 'createdAt'> = {
   title: '',
   description: '',
   status: 'todo',
-  dueDate: new Date().toISOString().split('T')[0],
+  dueDate: new Date().toISOString().split('T')[0], // Default to today
 };
 
 export const TaskForm = ({ open, onClose, onSubmit, taskToEdit }: TaskFormProps) => {
   const [formData, setFormData] = useState<Omit<Task, 'id' | 'createdAt'>>(initialFormData);
   const [errors, setErrors] = useState<FormErrors>({});
-  const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reset form and errors when dialog opens or taskToEdit changes
@@ -52,26 +44,32 @@ export const TaskForm = ({ open, onClose, onSubmit, taskToEdit }: TaskFormProps)
           title: taskToEdit.title,
           description: taskToEdit.description,
           status: taskToEdit.status,
-          dueDate: taskToEdit.dueDate.split('T')[0],
+          dueDate: taskToEdit.dueDate.split('T')[0], // Ensure YYYY-MM-DD format
         });
       } else {
         setFormData(initialFormData);
       }
-      setErrors({});
-      setSnackbar({ open: false, message: '' });
+      setErrors({}); // Clear errors on dialog open
     }
   }, [open, taskToEdit]);
 
   // Validation functions
   const validateTitle = (title: string) => (title.trim() ? '' : 'Title is required');
   const validateDueDate = (date: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    return date < today ? 'Due date cannot be in the past' : '';
+    const today = new Date();
+    // Set hours, minutes, seconds, milliseconds to 0 for accurate date comparison
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(date);
+    selectedDate.setHours(0, 0, 0, 0); // Ensure selected date is also compared without time
+
+    return selectedDate < today ? 'Due date cannot be in the past' : '';
   };
+
 
   // Handle field changes with validation
   const handleFieldChange = <K extends keyof typeof formData>(field: K, value: typeof formData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+    // Clear error for the field being edited
     if (field === 'title') {
       setErrors((prev) => ({ ...prev, title: validateTitle(value as string) || undefined }));
     } else if (field === 'dueDate') {
@@ -87,26 +85,25 @@ export const TaskForm = ({ open, onClose, onSubmit, taskToEdit }: TaskFormProps)
       dueDate: validateDueDate(formData.dueDate),
     };
 
+    // Update errors state immediately
+    setErrors(newErrors);
+
+    // Check if any errors exist
     if (Object.values(newErrors).some((error) => error)) {
-      setErrors(newErrors);
-      setSnackbar({ open: true, message: 'Please fix the errors in the form' });
       setIsSubmitting(false);
-      return;
+      return; // Stop submission if there are errors
     }
 
     try {
       onSubmit(formData);
-      onClose();
-    } catch {
-      setSnackbar({ open: true, message: 'Failed to save task. Please try again.' });
+      // onClose is called by onSubmit in Dashboard after success snackbar is shown
+    } catch (error) {
+      // In a real app, you might log this error or show a more specific error message
+      console.error("Failed to save task:", error);
+      // Dashboard's snackbar will handle the error feedback
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Handle Snackbar close
-  const handleSnackbarClose = () => {
-    setSnackbar({ open: false, message: '' });
   };
 
   return (
@@ -125,6 +122,7 @@ export const TaskForm = ({ open, onClose, onSubmit, taskToEdit }: TaskFormProps)
             error={!!errors.title}
             helperText={errors.title}
             sx={{ mb: 2 }}
+            disabled={isSubmitting} // Disable during submission
             aria-describedby={errors.title ? 'task-title-error' : undefined}
           />
           <TextField
@@ -137,6 +135,7 @@ export const TaskForm = ({ open, onClose, onSubmit, taskToEdit }: TaskFormProps)
             value={formData.description}
             onChange={(e) => handleFieldChange('description', e.target.value)}
             sx={{ mb: 2 }}
+            disabled={isSubmitting} // Disable during submission
           />
           <TextField
             id="task-status"
@@ -147,10 +146,11 @@ export const TaskForm = ({ open, onClose, onSubmit, taskToEdit }: TaskFormProps)
             value={formData.status}
             onChange={(e) => handleFieldChange('status', e.target.value as TaskStatus)}
             sx={{ mb: 2 }}
+            disabled={isSubmitting} // Disable during submission
           >
             {Object.keys(statusColors).map((status) => (
               <MenuItem key={status} value={status}>
-                {formatStatus(status)}
+                {formatStatus(status as TaskStatus)}
               </MenuItem>
             ))}
           </TextField>
@@ -161,12 +161,13 @@ export const TaskForm = ({ open, onClose, onSubmit, taskToEdit }: TaskFormProps)
             type="date"
             fullWidth
             InputLabelProps={{ shrink: true }}
-            InputProps={{ inputProps: { min: new Date().toISOString().split('T')[0] } }}
+            InputProps={{ inputProps: { min: new Date().toISOString().split('T')[0] } }} // Prevents selecting past dates visually
             value={formData.dueDate}
             onChange={(e) => handleFieldChange('dueDate', e.target.value)}
             error={!!errors.dueDate}
             helperText={errors.dueDate}
             sx={{ mb: 2 }}
+            disabled={isSubmitting} // Disable during submission
             aria-describedby={errors.dueDate ? 'task-due-date-error' : undefined}
           />
         </DialogContent>
@@ -179,16 +180,6 @@ export const TaskForm = ({ open, onClose, onSubmit, taskToEdit }: TaskFormProps)
           </Button>
         </DialogActions>
       </Dialog>
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={handleSnackbarClose}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert severity="error" onClose={handleSnackbarClose} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </>
   );
 };
