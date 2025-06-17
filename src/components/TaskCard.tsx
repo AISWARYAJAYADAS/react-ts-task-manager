@@ -11,7 +11,7 @@ import {
 import { Edit, Delete, ArrowForward, ArrowBack } from '@mui/icons-material';
 import type { TaskCardProps, TaskStatus } from '../types/taskTypes';
 import { formatStatus } from '../utils/formatUtils';
-import { statusColors, STATUS_ORDER } from '../constants/statusColors'; // Import STATUS_ORDER
+import { statusColors, STATUS_ORDER } from '../constants/statusColors';
 
 export const TaskCard = ({
   id,

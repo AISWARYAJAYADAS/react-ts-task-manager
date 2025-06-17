@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useContext } from 'react';
 import {
   Container,
   Typography,
@@ -7,12 +7,19 @@ import {
   Grid,
   Snackbar,
   Alert,
+  Tooltip,
+  IconButton, // Import IconButton
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles'; // Import useTheme
+import { Brightness4, Brightness7 } from '@mui/icons-material'; // Import icons for light/dark mode
+
 import { TaskForm } from '../components/TaskForm';
-import { TaskColumn } from '../components/TaskColumn'; // Import the new component
+import { TaskColumn } from '../components/TaskColumn';
 import type { Task, TaskStatus } from '../types/taskTypes';
 import { initialTasks } from '../data/initialTasks';
-import { STATUS_ORDER } from '../constants/statusColors'; // Use the defined order
+import { STATUS_ORDER } from '../constants/statusColors';
+import { ColorModeContext } from '../contexts/ColorModeContext';
+
 
 interface SnackbarState {
   open: boolean;
@@ -29,6 +36,10 @@ export const Dashboard = () => {
     message: '',
     severity: 'info',
   });
+
+  // Get theme and color mode context for the dark mode toggle
+  const theme = useTheme();
+  const colorMode = useContext(ColorModeContext);
 
   // --- Add New Task ---
   const handleAddTask = () => {
@@ -122,15 +133,23 @@ export const Dashboard = () => {
         <Typography variant="h4" component="h1">
           Task Manager
         </Typography>
-        <Button variant="contained" onClick={handleAddTask}>
-          + New Task
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Dark Mode Toggle Button */}
+          <Tooltip title={theme.palette.mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}>
+            <IconButton sx={{ ml: 1 }} onClick={colorMode.toggleColorMode} color="inherit">
+              {theme.palette.mode === 'dark' ? <Brightness7 /> : <Brightness4 />}
+            </IconButton>
+          </Tooltip>
+          <Button variant="contained" onClick={handleAddTask}>
+            + New Task
+          </Button>
+        </Box>
       </Box>
 
       {/* Columns */}
       <Grid container spacing={3}>
         {statuses.map((status) => (
-          <Grid key={status} size={{ xs: 12, sm: 6, md: 4 }}> {/* IMPORTANT: Re-added Grid item wrapper */}
+          <Grid key={status} size={{ xs: 12, sm: 6, md: 4 }}>
             <TaskColumn
               status={status}
               tasks={tasks}
